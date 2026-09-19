@@ -38,6 +38,10 @@ Create multiple **Slides**. Set a Featured Image, title, body, button text and U
 
 Create multiple **Notice Board** entries. Each can have a title, body, link and notice date. The homepage displays the configured number in the right-hand 20% notice panel.
 
+## Inline top-bar search
+
+The search icon in the top bar expands a search field in place. Clicking the icon does not leave the current page; WordPress search results open only after a visitor enters a query and submits the form.
+
 ## Homepage popup
 
 Go to **Customizer → Oni Lana Theme Settings → Homepage Popup** and switch **Enable Popup** on/off. You can edit:
@@ -65,7 +69,8 @@ Enable/disable under **Customizer → Blog Social Sharing**. Buttons are provide
 
 ## Gallery
 
-- Use **Gallery Items** in the dashboard for homepage/full gallery management.
+- The homepage carousel automatically displays the six newest image uploads from the Media Library and advances every five seconds.
+- Use **Gallery Items** in the dashboard to create separate albums. The Gallery page shows one cover per album and opens only the selected album in the photo viewer.
 - On a normal blog post, use **Post Gallery Images** to select multiple Media Library images.
 
 ## Embeds

@@ -14,40 +14,37 @@ get_header();
             'post_type'      => 'ol_gallery',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
-            'orderby'        => 'menu_order',
-            'order'          => 'ASC',
+            'orderby'        => array('menu_order' => 'ASC', 'date' => 'DESC'),
         ));
         if ($q->have_posts()):
             while ($q->have_posts()): $q->the_post();
-                $raw_ids = get_post_meta(get_the_ID(), '_ol_gallery_image_ids', true);
-                $ids = array_filter(array_map('absint', preg_split('/[,,\s]+/', (string) $raw_ids)));
-                if (!$ids) {
-                    $legacy = absint(get_post_meta(get_the_ID(), '_ol_gallery_image_id', true));
-                    if ($legacy) $ids = array($legacy);
-                }
-                $ids = array_slice(array_values(array_unique($ids)), 0, 10);
+                $ids = oni_lana_get_gallery_image_ids(get_the_ID());
                 if (!$ids) continue;
                 $caption = get_post_meta(get_the_ID(), '_ol_gallery_caption', true) ?: get_the_title();
+                $album_id = 'album-' . get_the_ID();
+                $cover_id = $ids[0];
+                $cover_url = wp_get_attachment_image_url($cover_id, 'full');
+                if (!$cover_url) continue;
                 ?>
                 <article class="gallery-album gallery-album-grid-item">
-                    <header class="gallery-album-head">
-                        <div>
-                            <div class="section-meta">Album</div>
-                            <h2><?php the_title(); ?></h2>
-                        </div>
-                        <span class="gallery-photo-count"><?php echo count($ids); ?> photos</span>
-                    </header>
-                    <div class="gallery-album-photos">
+                    <a class="gallery-album-cover" href="<?php echo esc_url($cover_url); ?>" data-gallery-open="<?php echo esc_attr($album_id); ?>" aria-label="<?php echo esc_attr(sprintf(__('Open the %s album', 'oni-lana'), get_the_title())); ?>">
+                        <?php echo wp_get_attachment_image($cover_id, 'large', false, array('loading' => 'lazy')); ?>
+                        <span class="gallery-album-overlay">
+                            <span class="section-meta"><?php esc_html_e('Album', 'oni-lana'); ?></span>
+                            <span class="gallery-album-title"><?php the_title(); ?></span>
+                            <span class="gallery-photo-count"><?php echo esc_html(sprintf(_n('%s photo', '%s photos', count($ids), 'oni-lana'), number_format_i18n(count($ids)))); ?></span>
+                        </span>
+                    </a>
+                    <div class="gallery-album-items" hidden>
                         <?php foreach ($ids as $image_id):
                             $src = wp_get_attachment_image_url($image_id, 'full');
                             if (!$src) continue;
+                            $image_caption = wp_get_attachment_caption($image_id) ?: $caption;
+                            $image_alt = get_post_meta($image_id, '_wp_attachment_image_alt', true) ?: get_the_title($image_id);
                             ?>
-                            <a class="gallery-album-photo" href="<?php echo esc_url($src); ?>" data-gallery-item data-caption="<?php echo esc_attr($caption); ?>">
-                                <?php echo wp_get_attachment_image($image_id, 'medium_large', false, array('loading' => 'lazy')); ?>
-                            </a>
+                            <a href="<?php echo esc_url($src); ?>" data-gallery-item data-gallery-group="<?php echo esc_attr($album_id); ?>" data-caption="<?php echo esc_attr($image_caption); ?>" data-alt="<?php echo esc_attr($image_alt); ?>"></a>
                         <?php endforeach; ?>
                     </div>
-                    <?php if ($caption): ?><p class="gallery-album-caption"><?php echo esc_html($caption); ?></p><?php endif; ?>
                 </article>
             <?php endwhile;
             wp_reset_postdata();
