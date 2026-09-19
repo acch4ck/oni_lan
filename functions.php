@@ -5,7 +5,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'ONI_LANA_VERSION', '1.7.0' );
+define( 'ONI_LANA_VERSION', '1.8.1' );
 define( 'ONI_LANA_DIR', get_template_directory() );
 define( 'ONI_LANA_URI', get_template_directory_uri() );
 
@@ -34,6 +34,8 @@ require_once ONI_LANA_DIR . '/inc/contact-validator.php';
 function oni_lana_assets() {
     wp_enqueue_style( 'oni-lana-main', ONI_LANA_URI . '/assets/css/main.css', array(), ONI_LANA_VERSION );
     wp_enqueue_script( 'oni-lana-main', ONI_LANA_URI . '/assets/js/main.js', array(), ONI_LANA_VERSION, true );
+    wp_enqueue_style( 'oni-lana-header-search', ONI_LANA_URI . '/assets/css/header-search.css', array( 'oni-lana-main' ), ONI_LANA_VERSION );
+    wp_enqueue_script( 'oni-lana-header-search', ONI_LANA_URI . '/assets/js/header-search.js', array(), ONI_LANA_VERSION, true );
 
     // Dedicated gallery assets are loaded only where gallery UI can appear.
     if ( is_page_template( 'page-gallery.php' ) || is_front_page() || is_singular( 'post' ) ) {
@@ -52,6 +54,51 @@ function oni_lana_assets() {
     ) );
 }
 add_action( 'wp_enqueue_scripts', 'oni_lana_assets' );
+
+/**
+ * Return the ordered image IDs assigned to a gallery album.
+ *
+ * The featured image and the old single-image field are retained as fallbacks
+ * so albums created with earlier versions of the theme continue to work.
+ */
+function oni_lana_get_gallery_image_ids( $post_id, $limit = 10 ) {
+    $raw_ids = get_post_meta( $post_id, '_ol_gallery_image_ids', true );
+    $ids     = array_filter( array_map( 'absint', preg_split( '/[,\s]+/', (string) $raw_ids ) ) );
+
+    if ( ! $ids ) {
+        $legacy_id = absint( get_post_meta( $post_id, '_ol_gallery_image_id', true ) );
+        if ( $legacy_id ) {
+            $ids[] = $legacy_id;
+        }
+    }
+
+    if ( ! $ids ) {
+        $thumbnail_id = get_post_thumbnail_id( $post_id );
+        if ( $thumbnail_id ) {
+            $ids[] = $thumbnail_id;
+        }
+    }
+
+    $ids = array_values( array_unique( $ids ) );
+
+    return array_slice( $ids, 0, max( 1, absint( $limit ) ) );
+}
+
+/**
+ * Find the published page using the Gallery template.
+ */
+function oni_lana_get_gallery_page_url() {
+    $pages = get_posts( array(
+        'post_type'      => 'page',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'meta_key'       => '_wp_page_template',
+        'meta_value'     => 'page-gallery.php',
+        'no_found_rows'  => true,
+    ) );
+
+    return $pages ? get_permalink( $pages[0] ) : home_url( '/gallery/' );
+}
 
 function oni_lana_widgets() {
     register_sidebar( array(
